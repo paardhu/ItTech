@@ -5,6 +5,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A thread-safe container that stores a group ID and members.
@@ -20,8 +21,10 @@ public class PoorGroup
     String groupId;
     HashSet<Member> members;
     boolean shouldStop;
+    //Final keyword improves performance. Not just JVM can cache final variable but also application can cache frequently use final variables
+    public static final AtomicInteger atomicInteger = new AtomicInteger(10);
 
-    class Member
+   static class Member
     {
         String memberId;
         int age;
@@ -61,14 +64,21 @@ public class PoorGroup
         members.add(member);
     }
 
-    public String getMembersAsStringWith10xAge()
+    /*
+    This method is not thread-safe because age *= 10 is not an atomic operation,
+    -If we use synchronized keyword so that only one thread can execute it at a time which removes possibility of coinciding or interleaving.
+    -Using Atomic Integer, which makes arithmetic operation(*) atomic, and since atomic operations are thread-safe and saves cost of external synchronization.
+    - Finally, This method thread-safe now because of locking and synchornization.
+   */ 
+    public synchronized String getMembersAsStringWith10xAge()
     {
         String buf = "";
         for (Member member : members)
         {
             Integer age = member.getAge();
-            // Don't ask the reason why `age` should be multiplied ;)
-            age *= 10;
+            // Don't ask the reason why `age` should be multiplied ;)    
+            int atomicval = atomicInteger.get();
+            age *= atomicval;
             buf += String.format("memberId=%s, age=%d¥n", member.getMemberId(), age);
         }
         return buf;
