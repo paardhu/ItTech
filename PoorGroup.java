@@ -18,16 +18,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ThreadSafe
 public class PoorGroup
 {
-    String groupId;
-    HashSet<Member> members;
+	//if you make the data private will you be able to control access to that data by controlling access to the code that manipulates the data.
+    private String groupId;
+    private HashSet<Member> members;
     boolean shouldStop;
     //Final keyword improves performance. Not just JVM can cache final variable but also application can cache frequently use final variables
-    public static final AtomicInteger atomicInteger = new AtomicInteger(10);
+    private static final AtomicInteger atomicInteger = new AtomicInteger(10);
 
-   static class Member
+    class Member
     {
-        String memberId;
-        int age;
+	 //if you make the data private will you be able to control access to that data by controlling access to the code that manipulates the data.
+        private String memberId;
+        private Integer age;//changed it from int to Integer -  An immutable object is one whose state can't be changed once the object is created.
 
         Member(String memberId, int age)
         {
@@ -68,27 +70,27 @@ public class PoorGroup
     This method is not thread-safe because age *= 10 is not an atomic operation,
     -If we use synchronized keyword so that only one thread can execute it at a time which removes possibility of coinciding or interleaving.
     -Using Atomic Integer, which makes arithmetic operation(*) atomic, and since atomic operations are thread-safe and saves cost of external synchronization.
-    - Finally, This method thread-safe now because of locking and synchornization.
+    - Finally, This method is thread-safe now because of locking and synchornization.
    */ 
     public synchronized String getMembersAsStringWith10xAge()
     {
-        String buf = "";
+    	StringBuffer buf = new StringBuffer();// changed from String to StringBuffer to make it threadSafe
         for (Member member : members)
         {
             Integer age = member.getAge();
             // Don't ask the reason why `age` should be multiplied ;)    
-            int atomicval = atomicInteger.get();
+            Integer atomicval = atomicInteger.get();
             age *= atomicval;
-            buf += String.format("memberId=%s, age=%d¥n", member.getMemberId(), age);
+            buf = buf.append(String.format("memberId=%s, age=%d¥n", member.getMemberId(), age));
         }
-        return buf;
+        return buf.toString();
     }
 
     /**
      * Run a background task that writes a member list to specified files 10 times in background thread
      * so that it doesn't block the caller's thread.
      */
-    public void startLoggingMemberList10Times(final String outputFilePrimary, final String outputFileSecondary)
+    public synchronized void startLoggingMemberList10Times(final String outputFilePrimary, final String outputFileSecondary)
     {
         new Thread(new Runnable() {
             @Override
@@ -145,4 +147,22 @@ public class PoorGroup
     {
         shouldStop = true;
     }
+    
+ /*public static void main(String args[]){
+    	
+    	PoorGroup pgroup = new PoorGroup("threadGroup");
+    	
+    	for(int i=1;i<=10;i++){
+    		String memid ="thread";
+    		Integer age = 20;
+    		memid+=i;
+    		age+=i;
+    		Member  m1 = pgroup.new Member(memid,age);
+    		pgroup.addMember(m1);
+    	}
+    	
+    	pgroup.startLoggingMemberList10Times("C:\\pardhu\\testFile1.txt","C:\\pardhu\\testFile2.txt");
+    	//pgroup.stopPrintingMemberList();
+    	pgroup.startLoggingMemberList10Times("C:\\pardhu\\testFile3.txt","C:\\pardhu\\testFile4.txt");
+    }*/
 }
